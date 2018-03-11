@@ -244,3 +244,7 @@ ModelManifest.xml
 
 *.pdf
 *.rar
+*.aux
+*.fls
+*.gz
+*.fdb_latexmk

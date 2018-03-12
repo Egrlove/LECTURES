@@ -1,0 +1,105 @@
+\LARGE{ \textbf {Лекция №3}}\\
+\Large{ \textbf {Многопоточное программирование}}\\
+
+Недостатки многопроцессорного программирования:\\
+Каждый процесс требует прикладных расходов. (Диспетчиризация процесса и тд).\\
+Передача сложных данных через канал не очень, но затруднительно. (Будет проще использовать разделяемую память).
+
+Распаралеливание в рамках одного процесса, работа ведется в рамках одного процесса (в одной области памяти)
+
+
+$int pthread_create( pthread_t *tidp_, pthread_attr_t *att2_p, void*(func_p)(void *), void* arg_p)$\\
+$attr_p$ - атрибуты потока.\\
+$pthread_attr_init(_att2_t * att2_p)\\$
+Атрибуты: \\
+\begin{enumerate}
+  \item Область действия конкуренции scope/
+  \item состояние присоединения / отсоединения . Есть возможность ожидать
+  \item адрес стека
+  \item размер стека
+  \item Приоритет потока (По умолчанию наследуется от родителя)
+  \item Политика диспечеризирования потоков( Можем поппытаться сказать, как планировать потоки на выполнение)
+\end{enumerate}
+$pthread_attr_destroy(_att2_t * att2_p)$ \\
+Одна структура может использоваться при создании многих потоков.\\
+Работа с область конкуренции
+$int pthread_attr_setscope(int pthread_att int scope) $\\
+PTHREAD_SCOPE_PROCESS - БЛАСТЬ КОНКУРЕНЦИИ  один процесс \\
+PTHREAD_SCOPE_SYSTEM - ОБЛАСТЬ ВСЯ СИСТЕМА.\\
+$int pthread_att_getscope(int pthread_att ,int * pscope)\\$
+Атрибуты для состояния определенности:\\
+int pthread_attr_setdetachstate( pthread_attr_t * attr_p, int state) . state может принимать 2 значения\\
+  PTHREAD_CREATE_DETACHED  - НЕТ ВОЗМОЖНОСТИ ОЖИДАТЬ\\
+  PTHREAD_CREATE_JOINABLE - можно не только ожидать, но и получать код возврата.\\
+int pthread_attr_getdetachstate( pthread_attr_t * attr_p, int* state) . state может принимать 2 значения\\
+pthread_exit(void * status) - явно завершает поток, при условии, что поток создан как joinable. \\
+int pthread_join(pthread_t tid(завершение которого ожидает), void **status(те значения которые выдал поток)) \\
+Можно узнать собственный идентификатор: \\
+pthread_t self(); \\
+
+Потоки могут синхронизироваться путем посылки сигналов:
+int pthread_kill(pthread_t tid, int signum) \\
+Кому шлется, номер сигнала.\\
+
+Механизмы синхронизации:\\
+\begin{itemize}
+  \item mutex - взаимоисключающие блокировки
+  \item Условные переменные
+  \item Семафоры
+  \item Барьер
+\end{itemize}
+
+mutex\\
+Может быть только один владелец, при поптытках других они будут блокироваться.
+После разблокировки право получает тот, у кого выше приоритет.
+
+int pthread_mutex_init( pthread_mutex_t *mp, pthread_mutex_attr_t * mattr_p)\\
+Указатель на mutex, структура(можно задавать NULL, так и будем делать)\\
+После того, как mutex не нужен:\\
+int pthread_mutex_destroy(pthread_mutex_t *mp)\\
+int pthread_mutex_lock() - поптыка захватить \\
+int pthread_mutex_unlock() - освобождение, только хозяин. \\
+int pthread_mutex_trylock() - можно проверить. \\
+
+
+Условные переменные\\
+Используются вместе с mutex\\
+Захватывает одип поток. \\
+Освобождает на время, по условной переменной осуществояется передача.\\
+
+int pthread_cond_init (pthread_cond_t *cvp ,pthread_cond_attr_t *cattr_p)\\
+int pthread_cond_destroy (pthread_cond_t *cvp) - указатель на переменную. \\
+int pthread_cond_wait(pthread_cond_t *cvp , pthread_mutex_t *mp) - постоянный владелец по переменной освобождает этот mutex \\
+int pthread_cond_signal(pthread_cond_t *cvp) - передача сигнала, о завершении временного освобождения \\
+
+\Large{ \textbf { Семафоры. }}\\
+Для использования нужно:\\
+semaphore.h\\
+Переменная с которой возможны только два действия : инкремент и декримент.\\
+Если поток пытается сделать меньше нуля, то он будет блокироваться.\\
+
+int sem_init(sem_t *sp, int pshared, u_int value)
+область действия семафора (0 - один единственный процесс, не нуль - на несколько процессов) ,начальноное значение.\\
+int sem_init(sem_t *sp)\\
+int sem_post(sem_t *sp) - увеличение на 1. \\
+int sem_wait(sem_t *sp) - попытка уменьшить значние семафора на единицу.\\
+int sem_trywait(sem_t *sp) - неблокирующая версия.\\
+
+\Large{ \textbf { Барьер. }}\\
+
+Некоторая точка, продолжение после которой будет только если потоков перед ним наберется равное ширине барьера.\\
+int pthread_barrier_init(pthread_barrier_t *bp, NULL, int width)\\
+int pthread_barrier(pthread_barrier_t *bp)\\
+
+\Large{ \textbf { Код примера. }}\\
+Конвеерная обработка данных, есть три модуля:\\
+1 производит - producer ( строка )\\
+2 обрабатывает - invertor \\
+3 получатель - consumer\\
+Для передачи строки будем использовать буффер msgbuf1 1-2 , msgbuf2 2-3 \\
+msglen1, msglen2 - длина строки.\\
+mtx1, mtx2 - mutex \\
+cv1, cv2 - условные переменные.\\
+
+Поставщик данных завхватывает mutex, инвертор пытается захватить его, он блокироуется,
+засыпает проц время не жрет. Спит пока поставщик не освободит перменную.

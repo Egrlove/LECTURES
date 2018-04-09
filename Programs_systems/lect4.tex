@@ -1,0 +1,119 @@
+\include{options}
+\begin{document}
+\LARGE{ \textbf {Лекция №4}}\\
+\Large{ \textbf {}}\\
+
+int socket(int dom, int type,int proto)\\
+1 - коммуникациооная область: AF_UNIX or AF_INET\\
+2 - тип протокола пердачи данных SOCK_STREAM , SOCK_DGRAM, SOCJ_RAW.\\
+3 - протокол для сокета указнного уровня. у нас всегда 0.\\
+Возврат - id сокета,полный аналог файлового дескриптора.\\
+
+Клиент -Сервер.\\
+Клиент:\\
+s = socket()\\
+[bind(s,..)]\\
+connect(s, ..)\\
+recv(s,..)\\
+write(s,..)\\
+shutdown(s, 2)\\
+close(s) \\
+
+Сервер: \\
+s = socket()\\
+bind(s,...)\\
+listen(s,..)\\
+snew = accept(s,...)\\
+send(snew,..)\\
+read(snew,..)\\
+shutdown(snew, 2)\\
+close(snew,..)\\
+
+
+
+Для начала и тот и другой должный создать сокет. Его нужно поименовать.\\
+int bind(int socket, name , int length )\\
+name - указатель на структуру.\\
+struct sockadd2{un in} *name;\\
+un - имя файла в опер. системе. Unix Domain.  \\
+in - internet domain, ip *2 , port * 2, протокол. \\
+
+int listen(int s, int n) - организовать очередь длиной n.\\
+int connect(int socket, name , int length ) - соединиться черз сокет сб с сервером из второго аргумента, длина адреса.\\
+int accept(int socket, name , int *length ) - принять запрос на соед. будет размещен в область name адрес клиента.
+В случае удачи возвращает дескриптор сокетаб такой же как первый, только дальнейший обмен должен вестись через него.\\
+
+Windows:\\
+int send(int s, char* buf, int n, int flags) buf -что посылаем, n -размер buf \\
+int recv(int s, char* buf, int n, int flags)\\
+flags:\\
+MSG_OOB - out of band, экстренные сообщения\\
+MSG_PEEK - при приеме данных, прочетать данные из сокета, оставив их в сокете\\
+
+
+При datagram сокете есть специальные функции.
+int send(int s, char* buf, int n, int flags, name, int len) name - тот же самый адрес \\
+int recv(int s, char* buf, int n, int flags, name, int *plen)\\
+
+
+shutdown(int s, int how)\\
+0 - сброс на чтение\\
+1 - сброс на запись, не пытаться отослать.\\
+2 - и то , и то\\
+
+
+Пример:\\
+Сервер:\\
+#define S_NAME "/tmp/s.sock"
+#define B_SIZE 256
+main(){
+int socket, new_socket, len;
+char buf[B_SIZE];
+
+struct sock_addr_un sname, fname;
+s = socket(AF_UNIX, SOCK_STREAM, 0);
+sname.sun_family = AF_UNIX;
+strcp(sname.sun_path, S_NAME);
+bind(s, &sname, sizeof(sname));
+listen(s,5);
+while(1)
+{
+len = sizeof(fname);
+snew= accept(s,&fname, &len);
+send(snew, "Who are you?", 13 , 0);
+read(snew,buf, B_SIZE);
+shutdown(snew,2);
+close(snew);
+}
+}
+
+Клиент:\\
+#define S_NAME "/tmp/s.sock"
+#define B_SIZE 256
+#define C_NAME "/tmp/c.sock"
+main(){
+
+int s, len;
+char buf[B_SIZE];
+
+struct sock_addr_un sname, cname;
+s = socket(AF_UNIX, SOCK_STREAM, 0);
+cname.sun_family = sname.sun_family = AF_UNIX;
+strcp(cname.sun_path, C_NAME);
+strcp(sname.sun_path, S_NAME);
+
+s= socket(AF_UNIX, SOCK_STREAM,0);
+bind(s, &cname, sizeof(cname));
+connect(s, &sname, sizeof(sname));
+recv(s, buf,B_SIZE);
+write(s, "I am ",9);
+shutdown(s, 2);
+close(s);
+ulink(C_NAME);
+
+
+
+}
+
+
+\end{document}

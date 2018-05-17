@@ -251,3 +251,4 @@ ModelManifest.xml
 Schemota/Schemes_logicaly/logicly_key.txt
 Programs_systems/Programs_systems.synctex.gz
 *.gz
+*.synctex(busy)
